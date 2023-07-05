@@ -22,13 +22,14 @@ const cliSpinners = require('cli-spinners')
 const which = require('which')
 const argv = require('minimist')(process.argv.slice(2))
 
-const npm5plus = semver.gte(execSync('npm -v', { encoding: 'utf-8' }).trim(), '5.0.0')
+const yarnVersion = semver.gte(execSync('yarn -v', { encoding: 'utf-8' }).trim(), '1.0.0')
 
-// in case npm ever gets installed as a dependency, make sure we always access
+// in case yarn ever gets installed as a dependency, make sure we always access
 // it from it's original location
-const npmCmd = which.sync(process.platform === 'win32' ? 'npm.cmd' : 'npm')
+const yarnCmd = which.sync(process.platform === 'win32' ? 'yarn.cmd' : 'yarn')
 
 process.env.PATH = 'node_modules' + require('path').sep + '.bin:' + process.env.PATH
+
 
 if (argv.help || argv.h) {
   console.log('Usage: tav [options] [<module> <semver> <command> [args...]]')
@@ -258,7 +259,7 @@ function execute (cmd, name, opts, cb) {
 function ensurePackages (packages, cb) {
   log('-- required packages %j', packages)
 
-  if (npm5plus) {
+  if (yarnVersion) {
     // npm5 will uninstall everything that's not in the local package.json and
     // not in the install string. This might make tests fail. So if we detect
     // npm5, we just force install everything all the time.
@@ -316,15 +317,15 @@ function attemptInstall (packages, attempts, cb) {
     }
   })
 
-  const opts = { noSave: true, command: npmCmd }
+  const opts = { noSave: false, command: yarnCmd }
   if (argv.verbose) opts.stdio = 'inherit'
 
-  // npm on Travis have a tendency to hang every once in a while
+  // yarn on Travis have a tendency to hang every once in a while
   // (https://twitter.com/wa7son/status/1006859826549477378). We'll use a
   // timeout to abort and retry the install in case it hasn't finished within 2
   // minutes.
   const timeout = setTimeout(function () {
-    done(new Error('npm install took too long'))
+    done(new Error('yarn install took too long'))
   }, 2 * 60 * 1000)
 
   install(packages, opts, done).on('error', done)
