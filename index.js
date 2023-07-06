@@ -96,7 +96,10 @@ function normalizeConf (conf) {
         .map(job => {
           if (!job.versions) throw new Error(`Missing "versions" property for ${name}`)
 
-          job.name = name
+          if (!job.name) {
+            job.name = name;
+          }
+          
           job.commands = toArray(job.commands)
           job.peerDependencies = toArray(job.peerDependencies)
 
